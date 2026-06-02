@@ -31,14 +31,17 @@ This project produces [Sensu Go dynamic runtime assets](https://docs.sensu.io/se
 
 2. **Use it in a check:**
    Reference the runtime asset and your plugin asset in your check configuration:
-   ```json
-   {
-     "type": "CheckConfig",
-     "spec": {
-       "command": "my-check.py",
-       "runtime_assets": ["sensu-python-runtime", "my-python-plugin"]
-     }
-   }
+   ```yaml
+   ---
+   type: CheckConfig
+   api_version: core/v2
+   metadata:
+     name: my-python-check
+   spec:
+     command: my-check.py
+     runtime_assets:
+       - sensu-python-runtime
+       - my-python-plugin
    ```
 
 *(See [examples/simple-check/](examples/simple-check/) for a complete working example.)*
