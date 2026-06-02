@@ -20,7 +20,7 @@ To work on this project locally, you will need:
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/sensu/sensu-python-runtime.git
+   git clone https://github.com/jhenderson-pro/sensu-python-runtime.git
    cd sensu-python-runtime
    ```
 

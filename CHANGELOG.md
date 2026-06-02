@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Moved legacy build materials to `docs/legacy/`.
+- Generated release asset URLs now use the active GitHub repository path.
 
 ## [0.1.0] — historical
 

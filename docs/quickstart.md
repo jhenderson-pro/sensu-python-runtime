@@ -13,7 +13,7 @@ This guide registers `sensu-python-runtime`, packages the stdlib-only example ch
 Download the generated runtime asset resource from the GitHub Release and create it:
 
 ```bash
-curl -LO https://github.com/sensu/sensu-python-runtime/releases/download/v0.2.0-beta.1/asset.yml
+curl -LO https://github.com/jhenderson-pro/sensu-python-runtime/releases/download/v0.2.0-beta.2/asset.yml
 sensuctl create -f asset.yml
 ```
 

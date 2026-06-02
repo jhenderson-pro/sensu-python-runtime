@@ -17,7 +17,7 @@ We take the security of this project seriously. If you believe you have found a 
 
 Instead, please report vulnerabilities via one of the following methods:
 
-1. **GitHub Security Advisory:** Use the "Report a vulnerability" button on the [Security tab](https://github.com/sensu/sensu-python-runtime/security/advisories) of this repository. This is the preferred method as it allows for private discussion and coordinated disclosure.
+1. **GitHub Security Advisory:** Use the "Report a vulnerability" button on the [Security tab](https://github.com/jhenderson-pro/sensu-python-runtime/security/advisories) of this repository. This is the preferred method as it allows for private discussion and coordinated disclosure.
 2. **Email:** If you cannot use the GitHub Security Advisory feature, please email [100726636+jhenderson-pro@users.noreply.github.com](mailto:100726636+jhenderson-pro@users.noreply.github.com).
 
 ### What to include

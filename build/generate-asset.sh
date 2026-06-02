@@ -53,8 +53,10 @@ echo "Generating $ASSET_YAML..."
 GLIBC_SHA=$(get_sha512 "$GLIBC_PATH")
 MUSL_SHA=$(get_sha512 "$MUSL_PATH")
 
-# Use a tag-based URL (vVERSION)
-BASE_URL="https://github.com/sensu/sensu-python-runtime/releases/download/v${VERSION}"
+# Use a tag-based URL (vVERSION). In GitHub Actions, GITHUB_REPOSITORY is
+# owner/repo; locally, default to this repository's current public location.
+REPOSITORY=${GITHUB_REPOSITORY:-jhenderson-pro/sensu-python-runtime}
+BASE_URL="https://github.com/${REPOSITORY}/releases/download/v${VERSION}"
 
 cat <<EOF > "$ASSET_YAML"
 ---
