@@ -64,7 +64,7 @@ jobs:
       - name: Generate SBOM (glibc)
         uses: anchore/sbom-action@v0
         with:
-          artifact: file:${{ steps.tarballs.outputs.glibc }}
+          file: ${{ steps.tarballs.outputs.glibc }}
           output-file: dist/sbom-glibc.spdx.json
           format: spdx-json
           upload-artifact: false
@@ -73,7 +73,7 @@ jobs:
       - name: Generate SBOM (musl)
         uses: anchore/sbom-action@v0
         with:
-          artifact: file:${{ steps.tarballs.outputs.musl }}
+          file: ${{ steps.tarballs.outputs.musl }}
           output-file: dist/sbom-musl.spdx.json
           format: spdx-json
           upload-artifact: false
