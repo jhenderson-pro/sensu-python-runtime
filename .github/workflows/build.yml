@@ -1,0 +1,38 @@
+name: build
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: shellcheck
+        run: shellcheck build/*.sh
+      # No active Dockerfiles currently in use for the build process.
+      # docs/legacy/ contains unmaintained historical files.
+
+  build:
+    needs: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch Upstream
+        run: ./build/fetch-upstream.sh
+      - name: Repackage glibc
+        run: ./build/repackage.sh glibc
+      - name: Repackage musl
+        run: ./build/repackage.sh musl
+      - name: Smoke Test glibc
+        run: ./build/smoke-test.sh dist/*_glibc.tar.gz
+      - name: Smoke Test musl (Alpine)
+        run: |
+          docker run --rm -v ${{ github.workspace }}:/work alpine:3.20 sh -c "apk add --no-cache bash && /work/build/smoke-test.sh /work/dist/*_musl.tar.gz"
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: runtime-tarballs
+          path: dist/*.tar.gz

@@ -1,0 +1,64 @@
+name: security
+
+on:
+  schedule:
+    - cron: '0 8 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Lint shell scripts
+        run: shellcheck build/*.sh
+
+  scan-release-artifacts:
+    needs: lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download latest release tarballs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p artifacts
+          gh release download \
+            --repo "${{ github.repository }}" \
+            --pattern '*.tar.gz' \
+            --dir artifacts
+
+      - name: Scan artifacts with Trivy
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          scan-type: fs
+          scan-ref: artifacts
+          format: sarif
+          output: trivy-results.sarif
+          vuln-type: os,library
+          severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
+          ignore-unfixed: false
+
+      - name: Upload Trivy SARIF
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-results.sarif
+          category: trivy-release-artifacts
+
+      - name: Scan artifacts with Grype
+        uses: anchore/scan-action@v3
+        with:
+          path: artifacts
+          output-format: sarif
+          output-file: grype-results.sarif
+          fail-build: false
+
+      - name: Upload Grype SARIF
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: grype-results.sarif
+          category: grype-release-artifacts

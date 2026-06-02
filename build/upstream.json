@@ -1,0 +1,14 @@
+{
+  "tag": "20260504",
+  "python_version": "3.13.13",
+  "artifacts": {
+    "x86_64-unknown-linux-gnu": {
+      "filename": "cpython-3.13.13+20260504-x86_64-unknown-linux-gnu-install_only.tar.gz",
+      "sha256": "ae3f206ebd07e0ed6e7a4dfca1a2018e63280d40031638ce51b245f1d4bb17bd"
+    },
+    "x86_64-unknown-linux-musl": {
+      "filename": "cpython-3.13.13+20260504-x86_64-unknown-linux-musl-install_only.tar.gz",
+      "sha256": "020a55e2aa2039df9ea2de841e32af4b7fc3ddb65305553814bb2ea416052991"
+    }
+  }
+}

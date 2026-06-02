@@ -1,0 +1,43 @@
+name: upstream-bump
+
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check for upstream updates
+        id: check
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python3 build/bump-upstream.py
+
+      - name: Open PR
+        if: steps.check.outputs.bumped == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: upstream-bump/${{ steps.check.outputs.tag }}
+          delete-branch: true
+          title: "chore: bump python-build-standalone to ${{ steps.check.outputs.tag }} (Python ${{ steps.check.outputs.py_version }})"
+          body: |
+            Automated upstream bump from the `upstream-bump` workflow.
+
+            **New tag:** `${{ steps.check.outputs.tag }}`
+            **Python version:** `${{ steps.check.outputs.py_version }}`
+
+            **Upstream release notes:** ${{ steps.check.outputs.release_url }}
+
+            ---
+            After merging, create a new version tag to trigger `release.yml` and publish updated runtime assets.
+          commit-message: "chore: bump python-build-standalone to ${{ steps.check.outputs.tag }}"
+          labels: dependencies,automated
