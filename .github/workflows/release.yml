@@ -1,0 +1,102 @@
+name: release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+  id-token: write
+  attestations: write
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Lint shell scripts
+        run: shellcheck build/*.sh
+
+  build-and-release:
+    needs: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Derive version from tag
+        id: version
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Fetch upstream
+        run: ./build/fetch-upstream.sh
+
+      - name: Repackage glibc
+        run: ./build/repackage.sh glibc "${{ steps.version.outputs.version }}"
+
+      - name: Repackage musl
+        run: ./build/repackage.sh musl "${{ steps.version.outputs.version }}"
+
+      - name: Smoke-test glibc
+        run: ./build/smoke-test.sh dist/*_glibc.tar.gz
+
+      - name: Smoke-test musl (Alpine)
+        run: |
+          docker run --rm \
+            -v "${{ github.workspace }}:/work" \
+            alpine:3.20 \
+            sh -c "apk add --no-cache bash && /work/build/smoke-test.sh /work/dist/*_musl.tar.gz"
+
+      - name: Generate SHA-512 checksums
+        run: |
+          cd dist
+          sha512sum *.tar.gz > sha512-checksums.txt
+
+      - name: Generate asset YAML
+        run: ./build/generate-asset.sh "${{ steps.version.outputs.version }}"
+
+      - name: Locate tarballs
+        id: tarballs
+        run: |
+          echo "glibc=$(ls dist/*_glibc.tar.gz)" >> "$GITHUB_OUTPUT"
+          echo "musl=$(ls dist/*_musl.tar.gz)" >> "$GITHUB_OUTPUT"
+
+      - name: Generate SBOM (glibc)
+        uses: anchore/sbom-action@v0
+        with:
+          path: ${{ steps.tarballs.outputs.glibc }}
+          output-file: dist/sbom-glibc.spdx.json
+          format: spdx-json
+          upload-artifact: false
+          upload-release-assets: false
+
+      - name: Generate SBOM (musl)
+        uses: anchore/sbom-action@v0
+        with:
+          path: ${{ steps.tarballs.outputs.musl }}
+          output-file: dist/sbom-musl.spdx.json
+          format: spdx-json
+          upload-artifact: false
+          upload-release-assets: false
+
+      - name: Attest glibc tarball
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: ${{ steps.tarballs.outputs.glibc }}
+
+      - name: Attest musl tarball
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: ${{ steps.tarballs.outputs.musl }}
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          prerelease: ${{ contains(github.ref_name, 'beta') || contains(github.ref_name, 'alpha') || contains(github.ref_name, 'rc') }}
+          generate_release_notes: true
+          files: |
+            dist/*.tar.gz
+            dist/sha512-checksums.txt
+            dist/sbom-glibc.spdx.json
+            dist/sbom-musl.spdx.json
+            dist/asset.yml

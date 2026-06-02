@@ -1,154 +1,74 @@
-# EXPERIMENTAL Sensu Go Python Runtime Assets
-[![Build Status](https://travis-ci.org/jspaleta/sensu-python-runtime.svg?branch=master)](https://travis-ci.org/jspaleta/sensu-python-runtime)
+# Sensu Python Runtime
 
-This project provides [Sensu Go Assets][sensu-assets] containing portable Python
-runtimes (for various platforms), based on the excellent [pyenv project][pyenv]. In practice, this Python runtime asset should allow
-Python-based scripts (e.g. [Sensu Community plugins][sensu-plugins]) to be
-packaged as separate assets containing Python scripts and any corresponding Python module
-dependencies. In this way, a single shared Python runtime may be delivered to
-systems running the new Sensu Go Agent via the new Sensu's new Asset framework
-(i.e. avoiding solutions that would require a Python runtime to be redundantly
-packaged with every python-based plugin).
+This project produces [Sensu Go dynamic runtime assets](https://docs.sensu.io/sensu-go/latest/plugins/assets/) containing portable CPython interpreters. A Sensu agent loads the runtime asset, then loads a separate plugin asset that contains a Python check, handler, mutator, or filter. The runtime asset places `python`, `python3`, and `pip` on the agent's `$PATH` for the duration of the execution, ensuring that the plugin's `#!/usr/bin/env python` shebang resolves correctly to a consistent, known version of Python.
 
+## What this is
 
-[sensu-assets]: https://docs.sensu.io/sensu-go/latest/reference/assets/
-[pyenv]: https://github.com/pyenv/pyenv
-[sensu-plugins]: https://github.com/sensu-plugins/
+- **A distribution and packaging project.** We repackage upstream CPython binaries into a format Sensu Go agents can consume.
+- **Portable and hermetic.** We use `python-build-standalone` (maintained by Astral) to provide binaries that are designed to run without being installed into system locations.
+- **Maintained and secure.** Every release includes SHA-512 checksums, Software Bill of Materials (SBOM), and build provenance attestations.
 
-## Platform Coverage:
- Currently this repository only supports a subset of Linux distribution by making use of Docker containers to build and test.
- If you would like extend the coverage, please take a look at the travisCI integration and test build scripts. We're happy to take pull requests that extending the platform coverage. Here's the current platform matrix that we are testing for as of the 0.1 release:
+## What this is not
 
-| Asset Platform | Tested Operating Systems Docker Images |
-|:---------------|:-------------------------|
-|  alpine  (based on alpine:3.8)   | Alpine(3, 3.8, latest)                                      |
-|  centos6 (based on centos:6)     | Centos(6, 7), Debian(8, 9, 10), Ubuntu(20.04, 16.04, 18.04  |
-|  centos7  (based on centos:7)     | Centos(7), Debian(8, 9, 10), Ubuntu(20.04, 16.04, 18.04     |
-|  debian8  (based on debian:8)     | Debian(8, 9, 10), Ubuntu(14.04, 16.04, 18.04), Centos(7,8)    |
+- **Not a replacement for system Python.** This is intended strictly for executing Sensu plugins.
+- **Not a CPython build system.** We do not compile Python from source; we repackage trusted upstream binaries.
+- **Not for heavy ML/scientific stacks.** We don't guarantee that every native Python wheel (especially those linking against complex system libraries) will work.
+- **Not for EOL versions.** We only support modern, maintained versions of Python (3.13+).
 
-## OpenSSL Cert Dir
-Please note that when using the Python runtime asset built on a target OS that is different from the build platform, you may need to explicitly set the SSL_CERT_DIR environment variable to match the target OS filesystem.  Example: CentOS configures it libssl libraries to look for certs by default in `/etc/pki/tls/certs` and Debian/Ubuntu use `/usr/lib/ssl/certs`. The CentOS runtime asset when used on a Debian system would require the use of SSL_CERT_DIR override in the check command to correctly set the cert path to `/usr/lib/ssl/certs`
+## Supported Versions and Platforms
 
+- **Python Version:** 3.13 (Primary stable default)
+- **Architectures:** amd64 (arm64 deferred to Phase 5)
+- **Platforms:** linux-glibc, linux-musl
 
-## Instructions
+## Quick Start
 
-Please note the following instructions:
-
-1. Use a Docker container to install `pyenv`, build a Python, and generate
-   a local_build Sensu Go Asset.
-
-   ```
-   $ docker build --build-arg "PYTHON_VERSION=3.6.11" -t sensu-python-runtime:3.6.11-alpine -f Dockerfile.alpine .
-   $ docker build --build-arg "PYTHON_VERSION=3.6.11" -t sensu-python-runtime:3.6.11-debian8 -f Dockerfile.debian8 .
+1. **Register the runtime asset:**
+   ```bash
+   curl -LO https://github.com/sensu/sensu-python-runtime/releases/download/v0.2.0-beta.1/asset.yml
+   sensuctl create -f asset.yml
    ```
 
-2. Extract your new sensu-python asset, and get the SHA-512 hash for your
-   Sensu asset!
-
-   ```
-   $ mkdir assets
-   $ docker run -v "$PWD/assets:/assets" sensu-python-runtime:3.6.11-debian8 cp /assets/sensu-python-runtime_3.6.11_debian8_linux_amd64.tar.gz /assets/
-   $ shasum -a 512 assets/sensu-python-runtime_3.6.11_debian8_linux_amd64.tar.gz
-   ```
-
-3. Put that asset somewhere that your Sensu agent can fetch it. Perhaps add it to the Bonsai asset index!
-
-
-
-3. Create an asset resource in Sensu Go.
-
-   First, create a configuration file called `sensu-python-runtime-3.6.11-debian.json` with
-   the following contents:
-
-   ```
-   {
-     "type": "Asset",
-     "api_version": "core/v2",
-     "metadata": {
-       "name": "sensu-python-runtime-3.6.11-debian",
-       "namespace": "default",
-       "labels": {},
-       "annotations": {}
-     },
-     "spec": {
-       "url": "http://your-asset-server-here/assets/sensu-python-runtime-3.6.11-debian8.tar.gz",
-       "sha512": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
-       "filters": [
-         "entity.system.os == 'linux'",
-         "entity.system.arch == 'amd64'",
-         "entity.system.platform_family == 'debian'"
-       ]
-     }
-   }
-   ```
-
-   Then create the asset via:
-
-   ```
-   $ sensuctl create -f sensu-python-runtime-3.6.11-debian.json
-   ```
-
-4. Create a second asset containing a Python script.
-
-   To run a simple test using the Python runtime asset, create another asset
-   called `helloworld-v0.1.tar.gz` with a simple Python script at
-   `bin/helloworld.py`; e.g.:
-
-   ```python
-   #!/usr/bin/env python
-   from datetime import datetime
-
-   now = datetime.now()
-
-   current_time = now.strftime("%H:%M:%S")
-   print("Hellow world! The current Time is ", current_time)
-
-   ```
-
-   _NOTE: this is a simple "hello world" example, but it shows that we have
-   support for basic modules!_
-
-   Compress this file into a g-zipped tarball and register this asset with
-   Sensu, and then you're all ready to run some tests!
-
-5. Create a check resource in Sensu Go.
-
-   First, create a configuration file called `helloworld.json` with
-   the following contents:
-
-   ```
+2. **Use it in a check:**
+   Reference the runtime asset and your plugin asset in your check configuration:
+   ```json
    {
      "type": "CheckConfig",
-     "api_version": "core/v2",
-     "metadata": {
-       "name": "helloworld",
-       "namespace": "default",
-       "labels": {},
-       "annotations": {}
-     },
      "spec": {
-       "command": "helloworld.py",
-       "runtime_assets": ["sensu-python-runtime-3.6.11-debian", "helloworld-v0.1"],
-       "publish": true,
-       "interval": 10,
-       "subscriptions": ["docker"]
+       "command": "my-check.py",
+       "runtime_assets": ["sensu-python-runtime", "my-python-plugin"]
      }
    }
    ```
 
-   Then create the asset via:
+*(See [examples/simple-check/](examples/simple-check/) for a complete working example.)*
 
-   ```
-   $ sensuctl create -f helloworld.json
-   ```
+## Use with a Python Plugin Asset
 
-   At this point, the `sensu-backend` should begin publishing your check
-   request. Any `sensu-agent` member of the "docker" subscription should
-   receive the request, fetch the Python runtime and helloworld assets,
-   unpack them, and successfully execute the `helloworld.py` command by
-   resolving the Python shebang (`#!/usr/bin/env python`) to the Python runtime
-   on the Sensu agent `$PATH`.:wq
+To use this runtime with your own Python scripts, you should package your plugin in a specific directory structure (`bin/`, `lib/`, `libexec/`) and use a wrapper script to set `PYTHONPATH`.
 
-## Building Python Assets that need additional modules
-The Python runtime includes a basic set of standard python modules. If you want to use a python script that requires additional modules, you can package those additional modules with your script in an asset. However you will need to use a wrapper script that set the python module search path correctly.  Please take a look at [packaging python modules](docs/building_assets.md) for detailed instructions on steps to take.
-   
+For a detailed guide on the recommended pattern, see [Packaging Python Checks](docs/packaging-python-checks.md).
+
+## Build from Source
+
+While we repackage upstream binaries, you can run the repackaging process locally to audit or customize the result. Our pipeline uses simple shell scripts to download, verify, and flatten the upstream layout.
+
+See the [Quickstart Guide](docs/quickstart.md) for build instructions.
+
+## Release Artifacts
+
+Every release on GitHub includes:
+- **Runtime Tarballs:** For both glibc and musl targets.
+- **SHA-512 Checksums:** Verified manifest of all artifacts.
+- **SBOM:** Software Bill of Materials in CycloneDX/SPDX format.
+- **Build Provenance:** SLSA attestations.
+- **Asset YAML:** A ready-to-use `core/v2` Asset resource definition.
+
+## Security and Support
+
+- **Security Policy:** See [SECURITY.md](SECURITY.md) for reporting vulnerabilities.
+- **Support Policy:** See [SUPPORT.md](SUPPORT.md) for the supported platform matrix and maintenance cadence.
+
+## Contributing
+
+We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for local development setup and our contribution guidelines.

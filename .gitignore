@@ -1,2 +1,5 @@
 assets/
 dist/
+build/cache/
+build/repackage_*/
+build/test_extract/
