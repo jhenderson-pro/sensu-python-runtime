@@ -27,7 +27,13 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           mkdir -p artifacts
+          tag="$(gh release list --repo "${{ github.repository }}" --limit 1 --json tagName --jq '.[0].tagName')"
+          if [ -z "$tag" ]; then
+            echo "No GitHub releases found for ${{ github.repository }}" >&2
+            exit 1
+          fi
           gh release download \
+            "$tag" \
             --repo "${{ github.repository }}" \
             --pattern '*.tar.gz' \
             --dir artifacts
