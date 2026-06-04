@@ -1,20 +1,19 @@
 ---
 description: "Portable CPython runtime for Sensu Go"
-spec:
-  builds:
+builds:
   - platform: "linux"
     arch: "amd64"
     asset_filename: "sensu-python-runtime_#{version}_python-3.13.13_linux_amd64_glibc.tar.gz"
     sha_filename: "sha512-checksums.txt"
     filter:
-    - "entity.system.os == 'linux'"
-    - "entity.system.arch == 'amd64'"
-    - "entity.system.platform != 'alpine'"
+      - "entity.system.os == 'linux'"
+      - "entity.system.arch == 'amd64'"
+      - "entity.system.platform != 'alpine'"
   - platform: "alpine"
     arch: "amd64"
     asset_filename: "sensu-python-runtime_#{version}_python-3.13.13_linux_amd64_musl.tar.gz"
     sha_filename: "sha512-checksums.txt"
     filter:
-    - "entity.system.os == 'linux'"
-    - "entity.system.arch == 'amd64'"
-    - "entity.system.platform == 'alpine'"
+      - "entity.system.os == 'linux'"
+      - "entity.system.arch == 'amd64'"
+      - "entity.system.platform == 'alpine'"
