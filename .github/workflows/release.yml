@@ -14,7 +14,7 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Lint shell scripts
         run: shellcheck build/*.sh
 
@@ -22,7 +22,7 @@ jobs:
     needs: lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Derive version from tag
         id: version
@@ -62,7 +62,7 @@ jobs:
           echo "musl=$(ls dist/*_musl.tar.gz)" >> "$GITHUB_OUTPUT"
 
       - name: Generate SBOM (glibc)
-        uses: anchore/sbom-action@v0
+        uses: anchore/sbom-action@v0.24.0
         with:
           file: ${{ steps.tarballs.outputs.glibc }}
           output-file: dist/sbom-glibc.spdx.json
@@ -71,7 +71,7 @@ jobs:
           upload-release-assets: false
 
       - name: Generate SBOM (musl)
-        uses: anchore/sbom-action@v0
+        uses: anchore/sbom-action@v0.24.0
         with:
           file: ${{ steps.tarballs.outputs.musl }}
           output-file: dist/sbom-musl.spdx.json
@@ -80,17 +80,17 @@ jobs:
           upload-release-assets: false
 
       - name: Attest glibc tarball
-        uses: actions/attest-build-provenance@v2
+        uses: actions/attest-build-provenance@v4
         with:
           subject-path: ${{ steps.tarballs.outputs.glibc }}
 
       - name: Attest musl tarball
-        uses: actions/attest-build-provenance@v2
+        uses: actions/attest-build-provenance@v4
         with:
           subject-path: ${{ steps.tarballs.outputs.musl }}
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           prerelease: ${{ contains(github.ref_name, 'beta') || contains(github.ref_name, 'alpha') || contains(github.ref_name, 'rc') }}
           generate_release_notes: true

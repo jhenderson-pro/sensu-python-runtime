@@ -13,7 +13,7 @@ jobs:
   bump:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Check for upstream updates
         id: check
@@ -23,7 +23,7 @@ jobs:
 
       - name: Open PR
         if: steps.check.outputs.bumped == 'true'
-        uses: peter-evans/create-pull-request@v6
+        uses: peter-evans/create-pull-request@v8.1.1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           branch: upstream-bump/${{ steps.check.outputs.tag }}

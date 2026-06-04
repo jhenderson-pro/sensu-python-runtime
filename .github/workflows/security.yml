@@ -13,7 +13,7 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Lint shell scripts
         run: shellcheck build/*.sh
@@ -33,7 +33,7 @@ jobs:
             --dir artifacts
 
       - name: Scan artifacts with Trivy
-        uses: aquasecurity/trivy-action@0.24.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: fs
           scan-ref: artifacts
@@ -44,13 +44,13 @@ jobs:
           ignore-unfixed: false
 
       - name: Upload Trivy SARIF
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: trivy-results.sarif
           category: trivy-release-artifacts
 
       - name: Scan artifacts with Grype
-        uses: anchore/scan-action@v3
+        uses: anchore/scan-action@v7.4.0
         with:
           path: artifacts
           output-format: sarif
@@ -58,7 +58,7 @@ jobs:
           fail-build: false
 
       - name: Upload Grype SARIF
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: grype-results.sarif
           category: grype-release-artifacts
