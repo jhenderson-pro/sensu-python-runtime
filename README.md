@@ -25,7 +25,7 @@ This project produces [Sensu Go dynamic runtime assets](https://docs.sensu.io/se
 
 1. **Register the runtime asset:**
    ```bash
-   curl -LO https://github.com/jhenderson-pro/sensu-python-runtime/releases/download/v0.2.0-beta.3/asset.yml
+   curl -LO https://github.com/jhenderson-pro/sensu-python-runtime/releases/download/v0.2.0-beta.4/asset.yml
    sensuctl create -f asset.yml
    ```
 
