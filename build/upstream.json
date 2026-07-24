@@ -1,14 +1,14 @@
 {
-  "tag": "20260504",
-  "python_version": "3.13.13",
+  "tag": "20260718",
+  "python_version": "3.13.14",
   "artifacts": {
     "x86_64-unknown-linux-gnu": {
-      "filename": "cpython-3.13.13+20260504-x86_64-unknown-linux-gnu-install_only.tar.gz",
-      "sha256": "ae3f206ebd07e0ed6e7a4dfca1a2018e63280d40031638ce51b245f1d4bb17bd"
+      "filename": "cpython-3.13.14+20260718-x86_64-unknown-linux-gnu-install_only.tar.gz",
+      "sha256": "5df2686713fcc114290a3b37db3f7253eb837721820ddba4575fdc131e70ec59"
     },
     "x86_64-unknown-linux-musl": {
-      "filename": "cpython-3.13.13+20260504-x86_64-unknown-linux-musl-install_only.tar.gz",
-      "sha256": "020a55e2aa2039df9ea2de841e32af4b7fc3ddb65305553814bb2ea416052991"
+      "filename": "cpython-3.13.14+20260718-x86_64-unknown-linux-musl-install_only.tar.gz",
+      "sha256": "6ab3cfb5c1fa55d2956cb53fd5757d6c7ae9ae8fc82ddeeb8f66d931f616b3a3"
     }
   }
 }
